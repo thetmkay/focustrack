@@ -51,8 +51,11 @@
 			this._containerHeight = $container.height();
 		},
 		_bindToResize: function() {
+			this.focusOnEvent($(window).resize);
+		},
+		focusOnEvent:  function(eventFn) {
 			var _this = this;
-			$(window).resize(function(event) {
+			eventFn(function(event) {
 				_this.focus();
 			});
 		},
