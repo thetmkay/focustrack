@@ -1,97 +1,141 @@
 (function($) {
 
-	$(document).on('ready', function() {
+	'use strict';
 
-		var midpoint = function (x1,x2) {
-			return (x1 + x2)/2;
-		};
+	function _FocusTrack(options) {
+		var _defaults = {
+			image: '',
+			container: '',
+			//targetPoint: [0,0,0,0],
+			//targetBox: [0,0,0,0],
+			bindToResize: false
+		},
+		self = this;
 
-		var calcPos =  function() {
-			// var coord = {
-			// 	x1: 398,
-			// 	x2: 789,
-			// 	y1: 608,
-			// 	y2: 980
-			// },
-			var coord = {
-				x1: 1500,
-				x2: 1920,
-				y1: 1080,
-				y2: 500,
-			},
-				c = [],
-				$img = $('img'),
-				$container = $img.parent();
-				//img = new Image();
+		options = $.extend(_defaults, options);
+		self._image = options.image;
+		self._container = options.container;
 
-			c.push(Math.min(coord.x1, coord.x2));
-			c.push(Math.min(coord.y1, coord.y2));
-			c.push(Math.max(coord.x1, coord.x2));
-			c.push(Math.max(coord.y1, coord.y2));
+		if(options.targetPoint) {
+			self.focus = self._pointFocus;
+			self._coords = options.targetPoint;
+		}
+		else if(options.targetBox) {
+			self.focus = self._boxFocus;
+			self._coords = self._normalize(options.targetBox);
+		}
+		else {
+			self.focus = self._pointFocus;
+			self._coords = self._findCenter(self._image);
+		}
 
-			console.log(c);
-			//img.src = 'photos/test.jpg';
+		if(options.bindToResize) {
+			self._bind();
+		}
+		// this._initImage();
+		// this._initContainer();
+	};
 
-			var i_width = $img.width(),
-				i_height = $img.height(),
-				c_width = $container.width(),
-				c_height = $container.height();
-				// g_width = Math.abs(coord.x1 - coord.x2),
-				// g_height = Math.abs(coord.y1 - coord.y2);
+	_FocusTrack.prototype = {
+		_midpoint: function(x,y) {
+			return (x + y)/2;
+		},
+		_initImage: function() {
+			var $image = $(this._image);
+			this._imageWidth = $image.width();
+			this._imageHeight = $image.height();
+		},
+		_initContainer: function() {
+			var $container = $(this._container);
+			this._containerWidth = $container.width();
+			this._containerHeight = $container.height();
+		},
+		_bindToResize: function() {
+			var _this = this;
+			$(window).resize(function(event) {
+				_this.focus();
+			});
+		},
+		_findCenter: function(selector) {
+			var $elem = $(selector),
+				x = this.midpoint(0,$elem.width()),
+				y = this.midpoint(0,$elem.height());
 
-			console.log($img);
-			console.log($container.width());
-			console.log($container.height());
-			console.log($img.width());
-			console.log($img.height());
+			return [x,y];
+		},
+		_normalize: function(points) {
+			var coords = [];
+			coords.push(Math.min(points[0], points[2]));
+			coords.push(Math.min(points[1], points[3]));
+			coords.push(Math.max(points[0], points[2]));
+			coords.push(Math.max(points[1], points[3]));
+			return coords;
+		},
+		_boxDisplacement: function(imageDimension, containerDimension, x, y) {
+			var shift = 0;
 
-			var left = 0,
-				top = 0;
+			if(imageDimension > containerDimension) {
 
-			if(i_width > c_width) {
+				var container_mid = (containerDimension)/2,
+					target_mid = this._midpoint(x,y);
 
-				var c_mid = (c_width)/2,
-					g_mid = midpoint(coord.x1,coord.x2);
-
-
-
-				if(g_mid < c_mid)
-					left = 0
-				else if (i_width - g_mid < c_mid)
-					left = c_width - i_width
+				if(target_mid < container_mid)
+					shift = 0;
+				else if (imageDimension - target_mid < container_mid)
+					shift = containerDimension - imageDimension;
 				else
-					left = c_mid - g_mid;
-
+					shift = container_mid - target_mid;
 			}
 
-			if(i_height > c_height) {
-				var c_mid = c_height/2,
-					g_mid = midpoint(coord.y1,coord.y2);
+			return shift;
+		},
+		_boxFocus: function() {
+			this._initImage();
+			this._initContainer();
+			var left_shift = this._boxDisplacement(this._imageWidth, this._containerWidth, this._coords[0], this._coords[2]),
+				top_shift = this._boxDisplacement(this._imageHeight, this._containerHeight, this._coords[0], this._coords[2]);
 
-				console.log('g_mid ' + g_mid);
-				console.log('c_mid ' + c_mid);
-
-				if(g_mid < c_mid)
-					top = 0
-				else if (i_height - g_mid < c_mid)
-					top = c_height - i_height
-				else
-					top = c_mid - g_mid;
-
-			}
-
+			this.track(left_shift, top_shift);
+		},
+		_pointFocus: function() {
+			this._initImage();
+			this._initContainer();
+		},
+		track: function(left, top) {
 			console.log(left);
 			console.log(top);
-
-			$img.css({
+			$(this._image).css({
 				'left': left,
-				'top': top
+				'top':top
 			});
+		}
+	};
 
+	function FocusTrack(options) {
+		return new _FocusTrack(options);
+	};
+
+	function jqueryFocusTrack(options) {
+		var _options = {
+			'container': this.selector
 		};
-		//console.log($img.style.backgroundImage);
-		$(window).on('load', calcPos);
-		$(window).on('resize', calcPos);
+		options = $.extend(_options,options);
+		FocusTrack(options).focus();
+		return this;
+	};
+
+	$.fn.focusTrack = jqueryFocusTrack;
+
+	$(document).on('ready', function() {
+		$('#container').focusTrack({
+			image: '#image',
+			targetBox: [1500,1080,1920,500]
+		});
+		// FocusTrack({
+		// 	image: '#image',
+		// 	container: '#container',
+		// 	targetBox: [1500,1080,1920,500]
+		// }).focus();
 	});
 
 
