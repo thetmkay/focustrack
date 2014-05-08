@@ -16,7 +16,7 @@ var app = module.exports = express();
 
 // all environments
 app.set('port', process.env.PORT || 3000);
-app.set('views', __dirname + '/views');
+//app.set('views', __dirname + '/views');
 // app.set('view engine', 'html');
 app.use(express.static(path.join(__dirname, 'public')));
 // app.use(app.router);
