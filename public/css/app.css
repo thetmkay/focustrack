@@ -5,8 +5,16 @@
 	overflow:hidden;
 }
 
-img {
-	position: relative;
+.grid-viewport {
+	width: 33%;
+	height: 33%;
+	display: inline-block;
+	overflow:hidden;
+	background-color: black;
+}
+
+.grid-viewport:hover {
+	background-color: #111;
 }
 
 html,body {

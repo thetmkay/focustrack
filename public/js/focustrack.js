@@ -14,8 +14,9 @@
 
 		options = $.extend(_defaults, options);
 		self._container = options.container;
-		self._image = self._container + ' img';
+		self._image = self._container + ' > img';
 		self._checkImage = options.dynamicImage;
+		self._not_loaded = false;
 
 		if(options.targetPoint) {
 			self.focus = self._pointFocus;
@@ -45,6 +46,13 @@
 		},
 		_initImage: function() {
 			var $image = $(this._image);
+			if(!$image[0].complete) {
+				this._not_loaded = true;
+			} else {
+				this._not_loaded = false;
+			}
+
+			console.log($image.width());
 			this._imageWidth = $image.width();
 			this._imageHeight = $image.height();
 		},
@@ -57,10 +65,7 @@
 			this.bindFocusToEvent($(window), 'resize');
 		},
 		bindFocusToEvent:  function($elem, event) {
-			var _this = this;
-			$elem.on(event, function(event) {
-				_this.focus();
-			});
+			$elem.on(event, $.proxy(this.focus, this));
 		},
 		_findCenter: function(selector) {
 			var $elem = $(selector),
@@ -96,8 +101,16 @@
 			return shift;
 		},
 		_boxFocus: function() {
+			var self = this;
 			if(this._checkImage) {
 				this._initImage();
+				console.log(this._imageWidth);
+			}
+			if(this._not_loaded) {
+				$(this._image).on('load', function() {
+					self._initImage();
+					self._boxFocus();
+				});
 			}
 			this._initContainer();
 			var left_shift = this._boxDisplacement(this._imageWidth, this._containerWidth, this._coords[0], this._coords[2]),
@@ -113,6 +126,7 @@
 		},
 		track: function(left, top) {
 			$(this._image).css({
+				'position': 'relative',
 				'left': left,
 				'top':top
 			});
