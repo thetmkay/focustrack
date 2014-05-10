@@ -2,7 +2,7 @@
 
 	'use strict';
 
-	function _FocusTrack(options) {
+	function FocusTrack(options) {
 		var _defaults = {
 			container: '',
 			//targetPoint: [0,0,0,0],
@@ -14,7 +14,7 @@
 
 		options = $.extend(_defaults, options);
 		self._container = options.container;
-		self._image = self._container + ' > img';
+		self._image = options.image || self._container + ' > img';
 		self._checkImage = options.dynamicImage;
 		self._not_loaded = false;
 
@@ -38,9 +38,9 @@
 			self._initImage();
 		}
 		// this._initContainer();
-	};
+	}
 
-	_FocusTrack.prototype = {
+	FocusTrack.prototype = {
 		_midpoint: function(x,y) {
 			return (x + y)/2;
 		},
@@ -82,13 +82,13 @@
 			coords.push(Math.max(points[1], points[3]));
 			return coords;
 		},
-		_boxDisplacement: function(imageDimension, containerDimension, x, y) {
+		_boxDisplacement: function(imageDimension, containerDimension, x1,x2) {
 			var shift = 0;
 
 			if(imageDimension > containerDimension) {
 
 				var container_mid = (containerDimension)/2,
-					target_mid = this._midpoint(x,y);
+					target_mid = this._midpoint(x1,x2);
 
 				if(target_mid < container_mid)
 					shift = 0;
@@ -133,23 +133,19 @@
 		}
 	};
 
-	function FocusTrack(options) {
-		return new _FocusTrack(options);
-	};
-
-	if(typeof(module) !== 'undefined') {
-		module.exports = FocusTrack;
+	if(typeof(window) !== 'undefined') {
+		window.FocusTrack = FocusTrack;
 	}
 
-	function jqueryFocusTrack(options) {
+	function JqueryFocusTrack(options) {
 		var _options = {
 			'container': this.selector
 		};
 		options = $.extend(_options,options);
-		FocusTrack(options).focus();
+		new FocusTrack(options).focus();
 		return this;
-	};
+	}
 
-	$.fn.focusTrack = jqueryFocusTrack;
+	$.fn.focusTrack = JqueryFocusTrack;
 
 })(jQuery);

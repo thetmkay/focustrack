@@ -15,6 +15,10 @@
 			name: 'four.jpg',
 			points: [1787,1846,1787+50,1846+50]
 		},
+		{
+			name: 'two.jpg',
+			points:[923,918,923,918]
+		}
 	]
 
 	$(document).on('ready', function() {
